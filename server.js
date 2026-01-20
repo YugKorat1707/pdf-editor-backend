@@ -24,8 +24,15 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 5000;
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+}));
+
 app.use(express.json());
 const MONGO_URI = "mongodb://127.0.0.1:27017/allinonepdf";
 
@@ -561,6 +568,6 @@ app.post("/overwrite-text", upload.single("pdf"), async (req, res) => {
 });
 
 
-app.listen(5000, () => {
+app.listen(PORT, () => {
   console.log("✅ Server running on http://localhost:5000");
 });
