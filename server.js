@@ -33,7 +33,7 @@ app.use(cors({
   methods: ["GET", "POST"],
 }));
 
-import mongoose from "mongoose";
+
 
 const MONGO_URI = process.env.MONGODB_URI;
 
