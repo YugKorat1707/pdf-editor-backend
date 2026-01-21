@@ -33,15 +33,23 @@ app.use(cors({
   methods: ["GET", "POST"],
 }));
 
-app.use(express.json());
-const MONGO_URI = "mongodb://127.0.0.1:27017/allinonepdf";
+import mongoose from "mongoose";
 
-mongoose.connect(MONGO_URI)
+const MONGO_URI = process.env.MONGODB_URI;
+
+if (!MONGO_URI) {
+  console.error("❌ MONGODB_URI is not defined");
+  process.exit(1);
+}
+
+mongoose
+  .connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected Successfully"))
-  .catch(err => {
+  .catch((err) => {
     console.error("❌ MongoDB Connection Error:", err.message);
-    process.exit(1); // Stop the server if DB cannot connect
+    process.exit(1);
   });
+
 
 // ------------------ FOLDERS ------------------
 const uploadDir = path.join(__dirname, "uploads");
