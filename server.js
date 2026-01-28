@@ -103,13 +103,15 @@ app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).send("No file uploaded");
 
+    const ext = path.extname(req.file.originalname).substring(1);
+
     const job = await cloudConvert.jobs.create({
       tasks: {
         "import-file": { operation: "import/upload" },
         "convert-file": {
           operation: "convert",
           input: "import-file",
-          input_format: "docx",
+          input_format: ext,
           output_format: "pdf"
         },
         "export-file": { operation: "export/url", input: "convert-file" }
@@ -123,8 +125,8 @@ app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
     const exportTask = finishedJob.tasks.find(t => t.name === "export-file");
 
     fs.unlinkSync(req.file.path);
-
     res.json({ url: exportTask.result.files[0].url });
+
   } catch (err) {
     console.error("Office to PDF error:", err.response?.data || err.message);
     res.status(500).send("Office to PDF failed");
