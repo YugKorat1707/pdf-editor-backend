@@ -108,7 +108,8 @@ app.post("/pdf-to-ppt", upload.single("file"), async (req, res) => {
         "convert-file": {
           operation: "convert",
           input: "import-file",
-          output_format: "pptx"
+          input_format: "pdf",      // ✅ REQUIRED
+          output_format: "pptx"     // ✅ REQUIRED
         },
         "export-file": { operation: "export/url", input: "convert-file" }
       }
@@ -126,10 +127,11 @@ app.post("/pdf-to-ppt", upload.single("file"), async (req, res) => {
     res.json({ url: fileUrl });
 
   } catch (err) {
-    console.log(err);
+    console.error("CloudConvert error:", err);
     res.status(500).send("Conversion failed");
   }
 });
+
 
 // ================= PDF TO WORD =================
 app.post("/pdf-to-word", upload.single("pdf"), async (req, res) => {
