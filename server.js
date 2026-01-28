@@ -69,17 +69,55 @@ app.post("/api/auth/login", async (req,res)=>{
 });
 
 // ================= CLOUDCONVERT OFFICE → PDF =================
+// app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
+//   try {
+//     const job = await cloudConvert.jobs.create({
+//       tasks: {
+//         "import-file": { operation: "import/upload" },
+//         "convert-file": {
+//           operation: "convert",
+//           input: "import-file",
+//           output_format: "pdf"
+//         },
+//         "export-file": { operation: "export/url", input: "convert-file" }
+//       }
+//     });
+
+//     const uploadTask = job.tasks.find(t => t.name === "import-file");
+//     await cloudConvert.tasks.upload(uploadTask, fs.createReadStream(req.file.path));
+
+//     const finishedJob = await cloudConvert.jobs.wait(job.id);
+//     const exportTask = finishedJob.tasks.find(t => t.name === "export-file");
+
+//     const fileUrl = exportTask.result.files[0].url;
+
+//     fs.unlinkSync(req.file.path);
+//     res.json({ url: fileUrl });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send("Office to PDF failed");
+//   }
+// });
 app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
   try {
     const job = await cloudConvert.jobs.create({
       tasks: {
         "import-file": { operation: "import/upload" },
+
         "convert-file": {
           operation: "convert",
           input: "import-file",
+          input_format: "docx",
+          input_format: "xls",
+          input_format: "pptx",
           output_format: "pdf"
         },
-        "export-file": { operation: "export/url", input: "convert-file" }
+
+        "export-file": {
+          operation: "export/url",
+          input: "convert-file"
+        }
       }
     });
 
@@ -95,23 +133,29 @@ app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
     res.json({ url: fileUrl });
 
   } catch (err) {
-    console.error(err);
+    console.error("Office to PDF error:", err);
     res.status(500).send("Office to PDF failed");
   }
 });
+
 //pdf to ppt
-app.post("/pdf-to-ppt", upload.single("pdf"), async (req, res) => {
+app.post("/pdf-to-ppt", upload.single("file"), async (req, res) => {
   try {
     const job = await cloudConvert.jobs.create({
       tasks: {
         "import-file": { operation: "import/upload" },
+
         "convert-file": {
           operation: "convert",
           input: "import-file",
-          input_format: "pdf",      // ✅ REQUIRED
-          output_format: "pptx"     // ✅ REQUIRED
+          input_format: "pdf",
+          output_format: "pptx"
         },
-        "export-file": { operation: "export/url", input: "convert-file" }
+
+        "export-file": {
+          operation: "export/url",
+          input: "convert-file"
+        }
       }
     });
 
@@ -127,8 +171,44 @@ app.post("/pdf-to-ppt", upload.single("pdf"), async (req, res) => {
     res.json({ url: fileUrl });
 
   } catch (err) {
-    console.error("CloudConvert error:", err);
-    res.status(500).send("Conversion failed");
+    console.error("PDF to PPT error:", err);
+    res.status(500).send("PDF to PPT conversion failed");
+  }
+});
+app.post("/excel-to-pdf", upload.single("file"), async (req, res) => {
+  try {
+    const job = await cloudConvert.jobs.create({
+      tasks: {
+        "import-file": { operation: "import/upload" },
+
+        "convert-file": {
+          operation: "convert",
+          input: "import-file",
+          input_format: "xlsx",
+          output_format: "pdf"
+        },
+
+        "export-file": {
+          operation: "export/url",
+          input: "convert-file"
+        }
+      }
+    });
+
+    const uploadTask = job.tasks.find(t => t.name === "import-file");
+    await cloudConvert.tasks.upload(uploadTask, fs.createReadStream(req.file.path));
+
+    const finishedJob = await cloudConvert.jobs.wait(job.id);
+    const exportTask = finishedJob.tasks.find(t => t.name === "export-file");
+
+    const fileUrl = exportTask.result.files[0].url;
+
+    fs.unlinkSync(req.file.path);
+    res.json({ url: fileUrl });
+
+  } catch (err) {
+    console.error("Excel to PDF error:", err);
+    res.status(500).send("Excel to PDF failed");
   }
 });
 
