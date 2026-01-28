@@ -67,6 +67,54 @@ app.post("/api/auth/login", async (req,res)=>{
   const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
   res.json({token,username:user.username});
 });
+app.post("/convert", upload.single("file"), async (req, res) => {
+  try {
+    const inputFilePath = req.file.path;
+    const inputFormat = path.extname(req.file.originalname).substring(1);
+    const outputFormat = req.body.to;
+
+    const job = await cloudConvert.jobs.create({
+      tasks: {
+        "import-file": {
+          operation: "import/upload"
+        },
+        "convert-file": {
+          operation: "convert",
+          input: "import-file",
+          input_format: inputFormat,
+          output_format: outputFormat
+        },
+        "export-file": {
+          operation: "export/url",
+          input: "convert-file"
+        }
+      }
+    });
+
+    const uploadTask = job.tasks.find(t => t.name === "import-file");
+    await cloudConvert.tasks.upload(uploadTask, fs.createReadStream(inputFilePath));
+
+    const completedJob = await cloudConvert.jobs.wait(job.id);
+    const exportTask = completedJob.tasks.find(t => t.name === "export-file");
+
+    const fileUrl = exportTask.result.files[0].url;
+
+    fs.unlinkSync(inputFilePath); // delete temp file
+
+    res.json({
+      success: true,
+      downloadUrl: fileUrl
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Conversion failed",
+      error: error.message
+    });
+  }
+});
 
 // ================= CLOUDCONVERT OFFICE → PDF =================
 // app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
