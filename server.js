@@ -99,6 +99,37 @@ app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
     res.status(500).send("Office to PDF failed");
   }
 });
+//pdf to ppt
+app.post("/pdf-to-ppt", upload.single("file"), async (req, res) => {
+  try {
+    const job = await cloudConvert.jobs.create({
+      tasks: {
+        "import-file": { operation: "import/upload" },
+        "convert-file": {
+          operation: "convert",
+          input: "import-file",
+          output_format: "pptx"
+        },
+        "export-file": { operation: "export/url", input: "convert-file" }
+      }
+    });
+
+    const uploadTask = job.tasks.find(t => t.name === "import-file");
+    await cloudConvert.tasks.upload(uploadTask, fs.createReadStream(req.file.path));
+
+    const finishedJob = await cloudConvert.jobs.wait(job.id);
+    const exportTask = finishedJob.tasks.find(t => t.name === "export-file");
+
+    const fileUrl = exportTask.result.files[0].url;
+
+    fs.unlinkSync(req.file.path);
+    res.json({ url: fileUrl });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Conversion failed");
+  }
+});
 
 // ================= PDF TO WORD =================
 app.post("/pdf-to-word", upload.single("pdf"), async (req, res) => {
