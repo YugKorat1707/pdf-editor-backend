@@ -100,7 +100,7 @@ app.post("/office-to-pdf", upload.single("file"), async (req, res) => {
   }
 });
 //pdf to ppt
-app.post("/pdf-to-ppt", upload.single("file"), async (req, res) => {
+app.post("/pdf-to-ppt", upload.single("pdf"), async (req, res) => {
   try {
     const job = await cloudConvert.jobs.create({
       tasks: {
